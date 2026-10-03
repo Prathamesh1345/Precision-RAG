@@ -1,8 +1,6 @@
 [server]
-# Re-run the app automatically every time you save a file
-runOnSave = true
-fileWatcherType = "poll"   # reliable inside WSL, including /mnt/c paths
 headless = true
+address = "127.0.0.1"
 port = 8501
 
 [browser]
@@ -11,7 +9,3 @@ gatherUsageStats = false
 [theme]
 base = "light"
 primaryColor = "#0b7a75"
-backgroundColor = "#f6f8f8"
-secondaryBackgroundColor = "#e9f1f0"
-textColor = "#10212b"
-font = "sans serif"

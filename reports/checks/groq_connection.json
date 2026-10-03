@@ -1,0 +1,12 @@
+{
+  "stage": "groq_connection",
+  "recalculated_at_utc": "2026-10-03T07:51:47.294204+00:00",
+  "authentication": "passed",
+  "model": "openai/gpt-oss-120b",
+  "completion": "passed",
+  "ragas": {
+    "status": "passed",
+    "samples": 1,
+    "purpose": "Judge integration test on known relevant evidence, NOT a retrieval benchmark"
+  }
+}

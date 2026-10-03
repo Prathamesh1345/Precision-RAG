@@ -1,0 +1,7 @@
+-r requirements.txt
+ragas==0.2.15
+langchain-groq==0.3.2
+langchain>=0.3.21,<0.4
+langchain-community>=0.3.20,<0.4
+langchain-openai>=0.3,<0.4
+groq>=0.23,<1

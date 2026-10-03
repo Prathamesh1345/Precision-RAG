@@ -32,12 +32,17 @@ MODES = {
 }
 MODE_NOTE = {
     "dense": "Phase 1 baseline. Cosine search over BGE embeddings.",
-    "hybrid": "Dense and BM25 fused with reciprocal rank fusion.",
+    "hybrid": "Dense and BM25 combined using the configured fusion method.",
     "hybrid_rerank": "Hybrid candidates rescored by a cross-encoder.",
 }
 CATEGORIES = ["description", "numeric", "entity", "location", "person"]
 LATENCY_SLA_MS = 300
-REPORTS = ROOT / "reports"
+REPORTS = ROOT.parent / "reports"
+latest_run = REPORTS / "latest_run.json"
+if latest_run.exists():
+    run_dir = Path(json.loads(latest_run.read_text(encoding="utf-8"))["path"])
+    if run_dir.exists():
+        REPORTS = run_dir
 
 
 # ---------------------------------------------------------------- backend
@@ -157,6 +162,10 @@ with tab_search:
                      top_k=top_k, generate=gen)
         if r:
             run_chips(r)
+            if r.get("generation_error"):
+                st.warning(r["generation_error"])
+            if r.get("generation_ms") is not None:
+                st.caption(f"Answer generation: {r['generation_ms']:.0f} ms (separate from retrieval)")
             if gen and r.get("answer"):
                 st.markdown(f'<div class="answer"><small>Answer, grounded in the passages below</small>{esc(r["answer"])}</div>',
                             unsafe_allow_html=True)
@@ -186,7 +195,14 @@ with tab_update:
     st.caption("Add, replace or remove one passage. The rest of the index is untouched.")
     c1, c2 = st.columns([1, 2])
     with c1:
-        pid = st.number_input("Passage id", min_value=1, value=999_000_001, step=1)
+        pid_text = st.text_input("Passage id", "999000001", help="Integer ID; text input preserves all 63 bits.")
+        try:
+            pid = int(pid_text)
+            valid_pid = 0 <= pid <= 2**63 - 1
+        except ValueError:
+            pid, valid_pid = 0, False
+        if not valid_pid:
+            st.warning("Enter an integer from 0 to 9223372036854775807.")
         u_src = st.text_input("Source", "custom")
         u_cat = st.selectbox("Category", CATEGORIES + ["custom"], index=5)
     with c2:
@@ -194,11 +210,13 @@ with tab_update:
                             value="ADROSONIC BUILD is a 24-hour student hackathon held at BIT Mesra "
                                   "from 2nd to 4th October 2026.")
     b1, b2, b3, _ = st.columns([1.3, 1.3, 1.7, 2])
-    if b1.button("Save passage", type="primary"):
+    if stats.get('read_only'):
+        st.info('The live presentation preserves the frozen benchmark corpus. Index updates are disabled in this session.')
+    if b1.button("Save passage", type="primary", disabled=not valid_pid or stats.get('read_only', False)):
         r = call(backend.upsert, pid, text, u_src, u_cat)
         if r:
             st.success(f"Saved passage {r.get('pid')}.")
-    if b2.button("Delete passage"):
+    if b2.button("Delete passage", disabled=not valid_pid or stats.get('read_only', False)):
         r = call(backend.delete, pid)
         if r:
             if r.get("status") == "deleted":
@@ -221,27 +239,29 @@ with tab_eval:
     if summary_path.exists():
         df = pd.read_json(summary_path)
     else:
-        st.markdown('<div class="note">No results yet. These are placeholder numbers to show the layout. '
-                    'Run <code>python -m eval.run_all</code> to fill it with real ones.</div>', unsafe_allow_html=True)
-        df = pd.DataFrame([
-            {"mode": "dense", "context_precision": 0.60, "context_recall": 0.62, "mrr@10": 0.30, "recall@5": 0.45, "p95": 70},
-            {"mode": "hybrid_rrf", "context_precision": 0.70, "context_recall": 0.70, "mrr@10": 0.35, "recall@5": 0.52, "p95": 95},
-            {"mode": "hybrid_rerank_rrf", "context_precision": 0.80, "context_recall": 0.74, "mrr@10": 0.42, "recall@5": 0.58, "p95": 240},
-        ])
+        st.info("No measured benchmark yet. Run python -m eval.run_all from the project root.")
+        st.stop()
 
-    best = df.iloc[-1]
+    if df.empty:
+        st.info("This evaluation has no completed modes yet.")
+        st.stop()
+    if df["context_precision"].isna().any():
+        st.warning("RAGAS is not measured for one or more modes. This is an incomplete development report.")
+
+    selection = st.selectbox("Measured mode", df["mode"].tolist())
+    best = df[df["mode"] == selection].iloc[0]
     stats_row = [("Context precision", best.get("context_precision"), 0.75, ">", "{:.2f}"),
                  ("Context recall", best.get("context_recall"), 0.70, ">", "{:.2f}"),
                  ("p95 latency", best.get("p95"), LATENCY_SLA_MS, "<", "{:.0f} ms"),
-                 ("Passages indexed", stats.get("points"), 100_000, ">", "{:,.0f}")]
+                 ("Passages indexed", None if backend.is_mock else stats.get("points"), 100_000, ">=", "{:,.0f}")]
     cols = st.columns(4)
     for col, (lbl, val, tgt, op, fmt) in zip(cols, stats_row):
-        if val is None:
+        if val is None or pd.isna(val):
             cls, shown = "", "—"
         else:
-            ok = float(val) > tgt if op == ">" else float(val) < tgt
+            ok = (float(val) >= tgt if op == ">=" else float(val) > tgt) if op in (">", ">=") else float(val) < tgt
             cls, shown = ("ok" if ok else "miss"), fmt.format(float(val))
-        tgt_txt = f"target {'above' if op == '>' else 'under'} {tgt:,}" + (" ms" if "ms" in fmt else "")
+        tgt_txt = f"target {'at least' if op == '>=' else 'above' if op == '>' else 'under'} {tgt:,}" + (" ms" if "ms" in fmt else "")
         col.markdown(f'<div class="stat"><div class="num {cls}">{shown}</div>'
                      f'<div class="lbl">{lbl}</div><div class="tgt">{tgt_txt}</div></div>', unsafe_allow_html=True)
 
@@ -253,7 +273,7 @@ with tab_eval:
               "hybrid_rerank_rrf": "Rerank", "hybrid_rerank": "Rerank", "hybrid": "Hybrid"}
     long["mode"] = long["mode"].map(lambda m: pretty.get(m, m))
     order = [pretty.get(m, m) for m in df["mode"]]
-    palette = ["#c9c9c9", "#8fbfae", "#0e6b4a", "#202020"][:len(order)]
+    palette = ["#c9c9c9", "#8fbfae", "#0e6b4a", "#202020", "#8b6f47", "#497e9c"][:len(order)]
     chart = alt.Chart(long).mark_bar(cornerRadiusTopLeft=6, cornerRadiusTopRight=6).encode(
         x=alt.X("mode:N", title=None, sort=order, axis=alt.Axis(labelAngle=0, labelFont="Figtree", labelFontSize=12, ticks=False, domain=False)),
         y=alt.Y("value:Q", title=None, scale=alt.Scale(domain=[0, 1]), axis=alt.Axis(grid=True, gridColor="#efefef", labelFont="Figtree", ticks=False, domain=False)),

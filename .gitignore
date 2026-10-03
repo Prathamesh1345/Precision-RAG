@@ -1,0 +1,13 @@
+.venv/
+.venv-gpu/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+data/
+qdrant_storage/
+tmp/
+exports/
+reports/ragas_cache/
+reports/ragas_smoke_cache/
+*.log

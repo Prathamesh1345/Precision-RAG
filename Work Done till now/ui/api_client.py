@@ -4,7 +4,7 @@ import requests
 
 from ui.mock_backend import MockBackend
 
-API_URL = os.getenv("PRAG_API_URL", "http://localhost:8000")
+API_URL = os.getenv("PRAG_API_URL", "http://127.0.0.1:8000")
 
 
 class ApiBackend:
@@ -14,7 +14,9 @@ class ApiBackend:
         self.url = url.rstrip("/")
 
     def stats(self):
-        return requests.get(f"{self.url}/stats", timeout=3).json()
+        r = requests.get(f"{self.url}/stats", timeout=3)
+        r.raise_for_status()
+        return r.json()
 
     def search(self, query, mode="hybrid_rerank", category=None, source=None, top_k=5, generate=False):
         r = requests.post(f"{self.url}/search", timeout=60, json={

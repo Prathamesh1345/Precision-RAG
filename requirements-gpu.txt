@@ -1,0 +1,12 @@
+# Install in a separate environment, never over the CPU requirements.
+fastembed-gpu==0.7.4
+onnxruntime-gpu[cuda,cudnn]==1.23.2
+qdrant-client==1.16.2
+pyarrow>=18,<23
+PyYAML>=6,<7
+python-dotenv>=1,<2
+psutil>=6,<8
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+groq>=0.23,<1
+# Optional evaluation dependencies are documented in docs/gpu.md.

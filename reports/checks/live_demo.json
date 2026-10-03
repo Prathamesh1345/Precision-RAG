@@ -1,0 +1,104 @@
+{
+  "query": "what does BANT stand for in sales",
+  "mode": "hybrid_rerank",
+  "fusion": "rrf",
+  "filter": {
+    "category": null,
+    "source": null
+  },
+  "hits": [
+    {
+      "pid": 5940841805549591659,
+      "text": "What does BANT stand for? The acronym BANT stands for: Funds: How a lot is the chance ready and prepared to spend? Authority: Who’s without equal determination maker? Want: Does the chance has an issue your product can clear up? Timing: Is there urgency?",
+      "source": "trendvira.com",
+      "category": "description",
+      "sources": [
+        "trendvira.com"
+      ],
+      "categories": [
+        "description"
+      ],
+      "url": "https://trendvira.com/how-to-use-bant-to-qualify-prospects-in-2018/",
+      "token_count": 58,
+      "trimmed": false,
+      "score": 7.7091217041015625,
+      "fusion_score": 0.032786883
+    },
+    {
+      "pid": 2679649935311986912,
+      "text": "Sales people have been using BANT (Budget, Authority, Needs, and Timing/Timeframe) criteria to qualify leads and prospects for a long time ever since IBM first coined that acronym. Industrial Lead Generation BANT Industrial Marketing leads for industrial sales MORE.",
+      "source": "b2bmarketingzone.com",
+      "category": "description",
+      "sources": [
+        "b2bmarketingzone.com"
+      ],
+      "categories": [
+        "description"
+      ],
+      "url": "https://www.b2bmarketingzone.com/bant/",
+      "token_count": 51,
+      "trimmed": false,
+      "score": 7.695457458496094,
+      "fusion_score": 0.032795697
+    },
+    {
+      "pid": 7920740165882478661,
+      "text": "What does BANT stand for? The acronym BANT stands for: Funds: How a lot is the chance ready and prepared to spend? Authority: Who's without equal determination",
+      "source": "trendvira.com",
+      "category": "description",
+      "sources": [
+        "trendvira.com"
+      ],
+      "categories": [
+        "description"
+      ],
+      "url": "https://trendvira.com/how-to-use-bant-to-qualify-prospects-in-2018/",
+      "token_count": 36,
+      "trimmed": false,
+      "score": 7.377591133117676,
+      "fusion_score": 0.032291666
+    },
+    {
+      "pid": 5039507852702778214,
+      "text": "IBM had an acronym for this, called BANT, which stands for Budget, Authority, Need and Timeline. A recent study showed that Inbound Marketing generates 54% more leads than outbound marketing campaigns.",
+      "source": "b2bmarketingzone.com",
+      "category": "description",
+      "sources": [
+        "b2bmarketingzone.com"
+      ],
+      "categories": [
+        "description"
+      ],
+      "url": "https://www.b2bmarketingzone.com/bant/",
+      "token_count": 41,
+      "trimmed": false,
+      "score": 7.12129020690918,
+      "fusion_score": 0.031498015
+    },
+    {
+      "pid": 3351766301960508868,
+      "text": "BANT has lasted during the ages as it’s efficient (when used as it should be), memorable, and appropriate to a spread of goods, value issues, and gross sales processes. Adapt it for your scenario, then ruthlessly goal the most productive suits.",
+      "source": "trendvira.com",
+      "category": "description",
+      "sources": [
+        "trendvira.com"
+      ],
+      "categories": [
+        "description"
+      ],
+      "url": "https://trendvira.com/how-to-use-bant-to-qualify-prospects-in-2018/",
+      "token_count": 54,
+      "trimmed": false,
+      "score": 4.433895587921143,
+      "fusion_score": 0.03076923
+    }
+  ],
+  "timings_ms": {
+    "encode": 7.4304999980085995,
+    "vector_db": 351.9501000009768,
+    "rerank": 364.00769999818294,
+    "total": 723.4664999996312
+  },
+  "answer": "BANT is a sales‑qualification framework that stands for **Budget (or Funds), Authority, Need (or Want), and Timing (or Timeline)**【5940841805549591659】【2679649935311986912】【5039507852702778214】.",
+  "generation_ms": 1218.831099999079
+}

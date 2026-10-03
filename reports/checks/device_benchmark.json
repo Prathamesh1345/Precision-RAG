@@ -1,0 +1,117 @@
+{
+  "stage": "device_benchmark",
+  "recalculated_at_utc": "2026-10-03T11:12:02.830698+00:00",
+  "results": {
+    "dense": {
+      "cpu": {
+        "seconds": [
+          4.070569499999692,
+          4.426455700002407,
+          4.336556700000074
+        ],
+        "median_seconds": 4.336556700000074,
+        "items": 128,
+        "session_providers": [
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CPUExecutionProvider": 928
+        },
+        "profile": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\reports\\checks\\ort_dense_cpu_2026-10-03_16-41-52.json",
+        "model_file": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\data\\models\\models--qdrant--bge-small-en-v1.5-onnx-q\\snapshots\\aa8f8b060edb00e03bfdd08813a2949946c8ba55\\model_optimized.onnx"
+      },
+      "cuda": {
+        "seconds": [
+          0.07899869999891962,
+          0.06589170000006561,
+          0.06784060000063619
+        ],
+        "median_seconds": 0.06784060000063619,
+        "items": 128,
+        "session_providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CUDAExecutionProvider": 380,
+          "CPUExecutionProvider": 8
+        },
+        "profile": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\reports\\checks\\ort_dense_cuda_2026-10-03_16-41-59.json",
+        "model_file": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\data\\models\\models--qdrant--bge-small-en-v1.5-onnx-q\\snapshots\\aa8f8b060edb00e03bfdd08813a2949946c8ba55\\model_optimized.onnx"
+      },
+      "comparison": {
+        "speedup": 63.92273505775903,
+        "max_absolute_difference": 0.0009243488311767578,
+        "allclose_rtol_1e-3_atol_1e-4": false,
+        "identical_order": null
+      }
+    },
+    "rerank": {
+      "cpu": {
+        "seconds": [
+          0.23886340000171913,
+          0.2995329999976093,
+          0.35179259999858914
+        ],
+        "median_seconds": 0.2995329999976093,
+        "items": 30,
+        "session_providers": [
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CPUExecutionProvider": 372
+        },
+        "profile": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\reports\\checks\\ort_rerank_cpu_2026-10-03_16-42-01.json",
+        "model_file": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\data\\models\\models--Xenova--ms-marco-MiniLM-L-6-v2\\snapshots\\a09144355adeed5f58c8ed011d209bf8ee5a1fec\\onnx\\model.onnx"
+      },
+      "cuda": {
+        "seconds": [
+          0.02001190000009956,
+          0.024035899998125387,
+          0.022956799999519717
+        ],
+        "median_seconds": 0.022956799999519717,
+        "items": 30,
+        "session_providers": [
+          "CUDAExecutionProvider",
+          "CPUExecutionProvider"
+        ],
+        "kernel_events_by_provider": {
+          "CUDAExecutionProvider": 370,
+          "CPUExecutionProvider": 4
+        },
+        "profile": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\reports\\checks\\ort_rerank_cuda_2026-10-03_16-42-02.json",
+        "model_file": "C:\\Users\\Shubham\\Desktop\\Precision-RAG-main\\data\\models\\models--Xenova--ms-marco-MiniLM-L-6-v2\\snapshots\\a09144355adeed5f58c8ed011d209bf8ee5a1fec\\onnx\\model.onnx"
+      },
+      "comparison": {
+        "speedup": 13.047680861612937,
+        "max_absolute_difference": 3.814697265625e-06,
+        "allclose_rtol_1e-3_atol_1e-4": true,
+        "identical_order": true
+      }
+    }
+  },
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD",
+    "cpu_logical": 16,
+    "ram_bytes": 16366272512,
+    "packages": {
+      "qdrant-client": "1.16.2",
+      "fastembed": null,
+      "fastembed-gpu": "0.7.4",
+      "datasets": null,
+      "onnxruntime": null,
+      "onnxruntime-gpu": "1.23.2",
+      "numpy": "2.5.3",
+      "ragas": null,
+      "langchain-groq": null
+    },
+    "devices": {
+      "dense": "cuda",
+      "rerank": "cuda"
+    }
+  },
+  "scope": "Local microbenchmark, 3 warm repeats; concurrent ingestion may affect timings. Not the 100-query acceptance benchmark."
+}
