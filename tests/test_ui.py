@@ -1,14 +1,13 @@
 import shutil
-from pathlib import Path
 
 from app.artifacts import write_json
 from app.config import ROOT
 
 
-def test_existing_ui_handles_missing_ragas_and_large_ids(tmp_path):
+def test_ui_handles_missing_ragas_and_large_ids(tmp_path):
     from streamlit.testing.v1 import AppTest
-    ui = tmp_path / 'Work Done till now' / 'ui'
-    shutil.copytree(ROOT / 'Work Done till now' / 'ui', ui, ignore=shutil.ignore_patterns('__pycache__'))
+    ui = tmp_path / 'ui'
+    shutil.copytree(ROOT / 'ui', ui, ignore=shutil.ignore_patterns('__pycache__'))
     write_json(tmp_path / 'reports' / 'summary.json', [
         {'mode': 'dense', 'context_precision': None, 'context_recall': None,
          'mrr@10': .2, 'recall@5': .3, 'p95': 301},

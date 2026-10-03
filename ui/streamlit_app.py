@@ -37,12 +37,15 @@ MODE_NOTE = {
 }
 CATEGORIES = ["description", "numeric", "entity", "location", "person"]
 LATENCY_SLA_MS = 300
-REPORTS = ROOT.parent / "reports"
+REPORTS = ROOT / "reports"
 latest_run = REPORTS / "latest_run.json"
 if latest_run.exists():
-    run_dir = Path(json.loads(latest_run.read_text(encoding="utf-8"))["path"])
-    if run_dir.exists():
-        REPORTS = run_dir
+    # eval.run_all writes an absolute path; fall back to the run id so a copied repo still works.
+    pointer = json.loads(latest_run.read_text(encoding="utf-8"))
+    for candidate in (Path(pointer.get("path", "")), REPORTS / "runs" / pointer.get("run_id", "")):
+        if candidate.is_dir():
+            REPORTS = candidate
+            break
 
 
 # ---------------------------------------------------------------- backend

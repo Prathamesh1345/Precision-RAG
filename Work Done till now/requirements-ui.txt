@@ -1,4 +1,0 @@
-streamlit>=1.49,<2
-requests
-pandas
-altair

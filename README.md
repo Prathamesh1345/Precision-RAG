@@ -1,197 +1,176 @@
 # PrecisionRAG
 
-Retrieval over a reproducible MS MARCO QnA v2.1 subset: BGE-small dense embeddings, BM25, Qdrant HNSW, configurable fusion, MiniLM cross-encoder reranking, and the team's existing Streamlit frontend. CPU and optional NVIDIA CUDA model execution are supported; see [GPU setup](docs/gpu.md).
+Team eyaaduhcaam, ADROSONIC BUILD 2026, PS1: Vector Database Design for Large-Scale Precision Retrieval in RAG Systems.
 
-Built against `Problem Statement.pdf`, `eyaaduhcaam_PS1.pdf`, and all files in `Work Done till now/`. The supplied frontend is retained in that folder; backend modules and commands run from this repository root.
+High-precision retrieval over a reproducible MS MARCO QnA v2.1 subset: BGE-small dense embeddings and BM25 sparse vectors in one Qdrant collection, configurable fusion (RRF, DBSF or weighted), MiniLM cross-encoder reranking, pre-retrieval metadata filters, live upsert/delete, a Streamlit interface, and a RAGAS + IR + latency benchmark that compares the dense baseline (Phase 1) with the hybrid stack (Phase 2). Everything runs locally on free, open-source tools; Groq's free tier is used only for answer generation and as the RAGAS judge.
 
-## Current verified state
+The problem statement and our Round 1 proposal are in `docs/`.
 
-- A real **100,000-passage** corpus has been downloaded and saved locally in `data/corpus.parquet` (~21 MB compressed).
-- **100 evaluation queries + 50 disjoint tuning queries** are frozen, with 100% labelled-passage coverage. This sample's maximum BGE length is 372 tokens, so no passage required clipping.
-- Real BGE/BM25/MiniLM inference, all fusion options, scoped search, upsert and delete have passed a small embedded-Qdrant functional check.
-- Docker Desktop is now installed, its WSL 2 engine is running, and Qdrant 1.16.2 responds on localhost:6333. See `reports/runtime_status.md` for the latest full-index status. Embedded tests alone do not establish performance at 100K.
-- A Groq key is configured privately in the gitignored `.env`. A real completion and RAGAS integration check passed. Both answers and judging use `openai/gpt-oss-120b` hosted on Groq because the original Llama model is unavailable to this key. **Only completed benchmark reports establish final quality and latency.**
+## Status
 
-`reports/verification.md` records local verification; `reports/benchmark_report.md` is generated only by actual benchmark runs.
+| Item | State |
+|---|---|
+| Corpus builder, ingestion, retrieval, API, UI, evaluation code | Done, 24 tests pass |
+| 100K corpus built and indexed | Done once, on one teammate's laptop (not in git; `data/` is ignored) |
+| Indexing under 2 hours | **Not yet.** First CPU build took 3 h 13 min, see `reports/archive/` |
+| Dense baseline latency on 100K | p95 35 ms over 100 queries (`reports/archive/`) |
+| RAGAS precision/recall, Phase 1 vs Phase 2 | **Not measured yet** |
+| Hybrid + rerank latency on 100K | **Not measured yet** |
 
-## Run on Windows
+Nothing in this repository claims a target is met until `python -m eval.run_all` has produced `reports/benchmark_report.md`.
 
-Use Python **3.12** and Docker Desktop with Linux containers. From this directory in PowerShell:
+## Run it
+
+Requirements: Python 3.12, Docker Desktop (Linux containers), about 3 GB of disk, internet for the first model and dataset download. Commands below are PowerShell; on Linux/macOS use `python3.12 -m venv .venv`, `source .venv/bin/activate` and plain `python`.
+
+### 1. Environment
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt -r requirements-eval.txt
-Copy-Item .env.example .env
-docker compose up -d qdrant
+Copy-Item .env.example .env        # add GROQ_API_KEY later; retrieval works without it
+docker compose up -d qdrant        # Qdrant on http://localhost:6333, dashboard at /dashboard
+```
 
-# Already completed in this workspace; needed after a fresh clone:
-.\.venv\Scripts\python.exe -m scripts.build_corpus --n 100000
+If PowerShell refuses to activate the venv, you don't need activation: every command here calls `.\.venv\Scripts\python.exe` directly.
 
+### 2. Quick check on a small corpus (about 10 minutes)
+
+`config.small.yaml` builds a 2,000-passage corpus with the same 100 frozen evaluation queries. Use it to confirm everything works on your machine before committing hours to the full build.
+
+```powershell
+$env:PRAG_CONFIG = 'config.small.yaml'
+.\.venv\Scripts\python.exe -m scripts.build_corpus --n 2000 --smoke
 .\.venv\Scripts\python.exe -m scripts.ingest
 .\.venv\Scripts\python.exe -m uvicorn app.api:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-In a second terminal:
+In a second terminal (set `$env:PRAG_CONFIG` again there):
 
 ```powershell
-.\.venv\Scripts\python.exe -m streamlit run "Work Done till now/ui/streamlit_app.py"
+.\.venv\Scripts\python.exe -m streamlit run ui/streamlit_app.py
 ```
 
-Open the UI at `http://localhost:8501`, API docs at `http://localhost:8000/docs`, and Qdrant dashboard at `http://localhost:6333/dashboard`. The API warms models before accepting requests. A first download can take several minutes.
+Open http://localhost:8501. The sidebar should say **Connected** with 2,000 passages. If it says **Sample data**, the API isn't up yet: wait for "Application startup complete" in the first terminal and click **Recheck connection**. A development benchmark without the LLM judge:
 
-For Linux/macOS, create the environment using `python3.12 -m venv .venv`, activate with `source .venv/bin/activate`, then use `python` in place of `.\.venv\Scripts\python.exe`. Docker and all modules are otherwise identical. `requirements-lock-windows-py312.txt` records the full tested Windows environment; the smaller requirement files support other platforms.
+```powershell
+.\.venv\Scripts\python.exe -m eval.run_all --skip-ragas
+```
 
-You can use the already-created `.venv` in this workspace without recreating it. Retrieval needs no API key. Set `GROQ_API_KEY` in `.env` for the optional answer generator and required final RAGAS evaluation. Use only a permitted free-tier Groq account. Dependencies installed by RAGAS include OpenAI client packages; this application never constructs an OpenAI client or requires an OpenAI key.
+### 3. Full 100K build (the submission index)
 
-If Docker was installed while your terminal was already open, reopen the terminal so its PATH includes Docker's credential helper, or run `scripts/start_qdrant.ps1`. The key can be checked without printing it using `python -m scripts.check_groq --ragas-smoke`.
+Same commands without `PRAG_CONFIG` (defaults to `config.yaml`, collection `msmarco_v21_100k`):
+
+```powershell
+.\.venv\Scripts\python.exe -m scripts.build_corpus --n 100000     # streams ~1 GB from Hugging Face
+.\.venv\Scripts\python.exe -m scripts.ingest                        # resumable; re-run after an interruption
+```
+
+Ingestion time is the open problem (see Status). Before starting it, read "Making indexing fit in 2 hours" below.
+
+A teammate who already has `data/` and a finished index can share them instead: copy the whole `data/` folder, then either copy `qdrant_storage/` with the container stopped, or take a snapshot from the Qdrant dashboard and restore it. Do not run `build_corpus` into a `data/` folder that already contains `manifest.json`.
+
+### 4. Benchmark and report
+
+```powershell
+.\.venv\Scripts\python.exe -m eval.run_all --phase baseline                 # Phase 1 dense, log it first
+.\.venv\Scripts\python.exe -m eval.run_all --phase core --ragas-queries 20  # dense vs hybrid+rerank
+.\.venv\Scripts\python.exe -m eval.run_all                                  # all fusion/filter ablations
+.\.venv\Scripts\python.exe -m scripts.recalculate --run reports/runs/<RUN_ID>
+```
+
+Each run writes `reports/runs/<RUN_ID>/` with raw rankings, per-query latency, per-query RAGAS scores, `summary.json`, `benchmark_report.md` and charts, then copies the summary and report to `reports/`. The UI's Results tab reads them. RAGAS needs `GROQ_API_KEY` in `.env`; check it with `python -m scripts.check_groq --ragas-smoke`.
+
+### 5. Tests
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q      # offline, deterministic fixture vectors, no model download
+.\.venv\Scripts\python.exe -m scripts.smoke  # real models on 65 corpus passages in embedded Qdrant
+```
+
+## Making indexing fit in 2 hours
+
+The first build ran at 8.6 passages/s. The component probe on the same laptop showed BGE-small on CPU at about 30 passages/s and on the RTX 3060 at about 1,900 passages/s. Options, in order of effort:
+
+1. **Use the GPU for dense encoding** (`docs/gpu.md`): separate `.venv-gpu`, `PRAG_DENSE_DEVICE=cuda`, and a **new collection name** so CPU and CUDA embeddings are never mixed. Expected to bring the full build to well under an hour; the problem statement says CPU is "acceptable", not required.
+2. **Raise `models.threads`** in `config.yaml` from 4 to the number of physical cores (8 on the 6800HS). ONNX Runtime was using a quarter of the machine.
+3. **Change nothing else.** Every batch is acknowledged, read back and exactly counted before the checkpoint advances; that is deliberate and cheap compared with encoding.
+
+Changing `models.*` or `index.*` changes the build identity, so an existing checkpoint refuses to resume; use a new `collection` name when you retune.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    A[MS MARCO v2.1 streamed at pinned revision] --> B[Freeze evaluation and tuning evidence]
+    A[MS MARCO v2.1 streamed at a pinned revision] --> B[Reserve evaluation and tuning evidence]
     B --> C[Normalize, token-limit, exact dedupe, metadata]
-    C --> D[SQLite staging then Parquet and qrels]
-    D --> E[Recalculate corpus and BM25 average length]
-    E --> F[BGE ONNX int8 and BM25 batches]
-    F --> G[Validate vectors, acknowledged upsert, read-back]
-    G --> H[Qdrant dense HNSW plus sparse IDF]
-    H --> I[Enable indexing and audit every ID]
-    UI[Existing Streamlit UI] --> API[FastAPI]
+    C --> D[SQLite staging, then Parquet + qrels + manifest]
+    D --> E[Calibrate BM25 average length]
+    E --> F[BGE ONNX dense + BM25 sparse, batched]
+    F --> G[Acknowledged upsert, read-back, exact count, checkpoint]
+    G --> H[Qdrant: dense HNSW int8 + sparse IDF, payload indexes]
+    UI[Streamlit UI] --> API[FastAPI]
     API --> Q[Encode query]
-    Q --> R[Dense and BM25 prefiltered search]
+    Q --> R[Dense + BM25 prefetch, filters applied inside the search]
     H --> R
-    R --> S[RRF, DBSF or weighted fusion]
-    S --> T[MiniLM rerank 30 candidates to top 5]
+    R --> S[RRF / DBSF / weighted fusion]
+    S --> T[MiniLM rerank 30 to 5]
     T --> UI
     T --> L[Optional Groq answer with passage-ID citations]
-    I --> V[Frozen IR, RAGAS and 100-query latency runs]
-    V --> W[Recalculate raw logs, charts, report, UI dashboard]
+    H --> V[Frozen IR, RAGAS and 100-query latency runs]
+    V --> W[Recalculated summary, report, charts, UI Results tab]
 ```
 
-## Data preparation and trimming
+## Retrieval settings
 
-The selected dataset is the **QnA v2.1** configuration of `microsoft/ms_marco`, matching the proposal. It is not the separate MS MARCO passage-ranking leaderboard corpus. Relevant passages are derived from `is_selected == 1`; the first nonempty answer supplies the RAGAS reference.
+All tunables live in `config.yaml` (and `config.small.yaml` for development).
 
-`scripts.build_corpus` streams Hugging Face data, uses a deterministic seed and bounded shuffle buffer, reserves all passages attached to the evaluation/tuning queries, and fills the remaining cap with training distractors. This is bounded-buffer sampling, not a uniform sample of the entire dataset. Duplicate query text cannot appear across the two query sets. Matching training query rows are excluded.
-
-Whitespace normalization precedes a stable 63-bit text hash. A hash collision with different text fails explicitly. Exact duplicate passages merge their observed category/source memberships, so filtering does not silently lose the evaluation category. Semantic near-duplicates are not removed: hash deduplication cannot do that.
-
-Passages above **510 BGE content tokens** are clipped at a tokenizer offset, reserving two special tokens. Evaluation rows whose labelled positives would be clipped are excluded, preserving their full-passage relevance labels. The corpus cap is exact and cannot silently drop evaluation evidence. The existing 100K sample did not require token clipping.
-
-Artifacts include `corpus.parquet`, `eval_queries.jsonl`, `tuning_queries.jsonl`, `qrels.json`, `manifest.json`, and numbered JSON recalculation checks. The manifest pins the actual dataset/tokenizer revisions and hashes every final data artifact. Store the dataset locally; generated data and model caches are gitignored.
-
-For a small non-qualifying development corpus:
-
-```powershell
-python -m scripts.build_corpus --n 2000 --n-eval 100 --n-tune 50 --output data/small --smoke
-```
-
-Use a separate YAML config with `data_dir: data/small` and a new collection, then select it with `$env:PRAG_CONFIG='config.small.yaml'`. An interrupted corpus build can be restarted with the same command plus `--restart`. Completed corpora are never overwritten by that flag. Interrupted **ingestion** resumes automatically from acknowledged checkpoints; it does not recreate or delete collections.
-
-## Scale to 500K
-
-Copy `config.yaml` to `config.500k.yaml`, set `data_dir: data/500k`, `reports_dir: reports/500k`, and `collection: msmarco_v21_500k`. Keep the dataset revision and seed unchanged:
-
-```powershell
-$env:PRAG_CONFIG='config.500k.yaml'
-python -m scripts.build_corpus --n 500000
-python -m scripts.ingest
-python -m eval.run_all
-```
-
-This preserves the 100K corpus and index. The validation query selection is independent of the passage cap, so both scales use the same query sets when the revision, seed and query counts are unchanged. Compare actual `ingest_stats.json` and benchmark outputs between scales. CPU time, index disk footprint, host RAM and configuration are logged; timings and memory savings are not guaranteed.
-
-## Retrieval design and configuration
-
-All tunables live in `config.yaml`.
-
-| Component | Default | Interpretation |
+| Component | Default | Notes |
 |---|---|---|
-| Dense | `BAAI/bge-small-en-v1.5` | 384-D, FastEmbed quantized ONNX artifact; cosine distance |
-| Sparse | `Qdrant/bm25` | k1=1.2, b=0.75; avgdl recalculated from the corpus's stemmed tokens; server-side IDF |
-| Dense index | HNSW M=16, construction ef=128 | INT8 scalar index, full-precision originals on disk, rescoring enabled |
-| Candidate branches | 50 dense + 50 sparse | Filters apply to BOTH branches inside Qdrant |
-| Reranker | `Xenova/ms-marco-MiniLM-L-6-v2` | ONNX cross-encoder, fused top 30 to top 5; scores are logits |
-| Search | ef=128, oversampling=2 | Tune only on the separate tuning set |
-| Cache | 2048 entries, 120-second TTL | Query embeddings and results; both bypassed in evaluation |
+| Dense | `BAAI/bge-small-en-v1.5` | 384-d, FastEmbed quantized ONNX, cosine |
+| Sparse | `Qdrant/bm25` | k1=1.2, b=0.75; avgdl calibrated on the corpus; IDF kept by Qdrant |
+| Index | HNSW M=16, ef_construct=128, int8 scalar quantization | originals on disk, rescoring on |
+| Candidates | 50 dense + 50 sparse | filters are applied to both branches inside Qdrant |
+| Fusion | `rrf` (k=60); `dbsf` and `weighted` (alpha=0.6) available | Qdrant 1.16 RRF uses zero-based ranks: sum 1/(k+r) |
+| Reranker | `Xenova/ms-marco-MiniLM-L-6-v2` | fused top 30 to top 5; scores are logits |
+| Cache | 2048 entries, 120 s TTL | query embeddings and results; bypassed during evaluation |
 
-**RRF:** Qdrant 1.16 uses zero-based rank `r`, with `score(d) = sum(1 / (k + r))`; default configurable `k=60`. Do not confuse this with a one-based `1/(k+rank)` formula using the same numeric constant. Qdrant server/client 1.16.2 are pinned for configurable RRF support. [Qdrant hybrid query documentation](https://qdrant.tech/documentation/search/hybrid-queries/).
+Weighted fusion min-max normalizes each branch independently; a document missing from one branch contributes zero there. `source` and `category` are display values, while `sources` and `categories` keep every observed membership for filtering. Live upserts write both vectors and the payload, wait for completion, verify read-back and clear the result cache. Serve the API with one worker: a lock serializes mutations with searches.
 
-**Weighted fusion:** independently min-max normalize each branch, then `alpha*dense + (1-alpha)*BM25`, with `alpha=0.6`. Missing documents have zero contribution from that branch. Constant-score branches receive 1 for their present documents. Equal final scores use ascending passage ID for deterministic ties.
+## Data
 
-**DBSF:** Qdrant's distribution-based score fusion is included as another ablation. Dense mode invokes only the dense query encoder.
+`scripts.build_corpus` streams `microsoft/ms_marco` (config v2.1, pinned revision) with a seeded bounded shuffle. It takes the evaluation and tuning queries from the validation split first, keeps every passage attached to them (so recall is never capped by sampling), then fills the cap with training passages. Passages are whitespace-normalized, hashed to a stable 63-bit id, exactly de-duplicated (memberships merged), and clipped at 510 BGE tokens; an evaluation row whose labelled positive would be clipped is skipped. Outputs: `corpus.parquet`, `eval_queries.jsonl`, `tuning_queries.jsonl`, `qrels.json`, `manifest.json` (hashes of all of them) and `checks/`.
 
-`source` and `category` preserve a display value, while `sources` and `categories` retain all observed duplicate memberships for keyword payload filtering. Query type is dataset metadata, not a classifier trained on the query. BM25 avgdl is frozen at corpus build so live updates do not require re-embedding every document; Qdrant updates IDF dynamically. Recalibrate and rebuild if the document distribution changes substantially.
+Relevance labels come from `is_selected == 1`; the first non-empty answer is the RAGAS reference. Labels are sparse, so absolute IR numbers look low; the comparison between modes is what matters.
 
-Live upserts replace both vectors and the payload, wait for completion, verify read-back and invalidate results. Deletes check actual presence after removal. Serve **one API worker**: a lock serializes search/cache writes with mutations. For multiple workers or external writers, replace the in-process cache with shared versioned invalidation. Run ingestion/evaluation with demo mutations stopped; benchmarking detects live-edited records and refuses the contaminated collection.
+## Scaling to 500K
 
-## Evaluation and recalculation
-
-```powershell
-# Log Phase 1 before tuning or comparing Phase 2.
-python -m eval.run_all --phase baseline
-
-# Core submission comparison at the required minimum of 20 RAGAS queries per mode.
-# Still measures 100 distinct queries for latency and IR in both modes.
-python -m eval.run_all --phase core --ragas-queries 20
-
-# Optional: choose candidate count and HNSW ef using only tuning queries.
-python -m eval.tune
-
-# Dense, RRF, weighted, DBSF, rerank, and separately labelled filtered ablation.
-python -m eval.run_all
-
-# Development only: IR and latency without mandatory final RAGAS scores.
-python -m eval.run_all --skip-ragas
-
-# Independent audit; optionally pass a saved run directory.
-python -m scripts.recalculate
-python -m scripts.recalculate --run reports/runs/RUN_ID
-```
-
-Each run records raw top-10 rankings, top-5 RAGAS evidence, per-query RAGAS scores, 100 consecutive warm-model cache-disabled latency samples, stage times, environment, config, source hashes, and model file hashes. RAGAS evaluates 50 frozen queries by default (minimum 20). IR includes MRR@10, Recall@5 and binary nDCG@10. LLM generation is outside retrieval timing; the current latency harness measures the in-process retrieval service, not HTTP/network round trips. RAGAS scores use the first five saved top-10 results.
-
-Dense runs first. A failure leaves its completed raw artifacts available. Groq judging is sequential with retries and persistent per-metric/per-sample cache; a rerun reuses completed judgments only when evidence, judge, metric version and prompt version match. All configurations must use the same judge. There is no silent fallback to another provider or model, and failed/NaN scores cannot become a successful partial average.
-
-The filtered ablation scopes every query by its known dataset category. It is reported separately as a favourable scoped workload, not as evidence of general retrieval improvement. Human labels are sparse and the cross-encoder is trained on MS MARCO, so report both limitations.
-
-Every major stage has a recalculation:
-
-1. Evaluation selection: unique IDs, disjoint query sets, retained labelled evidence.
-2. Cleaning: SQL count, normalization, duplicate and trimming counters.
-3. Export: reopen Parquet, verify hashes, token counts, qrels and coverage.
-4. Encoding: finite vectors, exact dimensions, unit norms, valid sparse indices, calibrated BM25 average length.
-5. Ingestion: acknowledged writes, read-back IDs, exact count per batch, atomic checkpoint, final full ID/text audit and optimizer readiness.
-6. Updates: read-back and exact count, then cache invalidation.
-7. Evaluation: recompute IR, RAGAS means and percentiles from saved per-query logs before publishing a report.
-
-Acceptance is **measured**, never inferred: >=100K indexed, indexing <7200 seconds, Phase 2 precision >0.75, recall >0.70, improvement over dense, and p95 <300 ms across >=100 queries. `--skip-ragas` cannot satisfy the submission requirements. Do not publish the sample frontend's fake search scores as evaluation evidence.
-
-## Verification
+Copy `config.yaml` to `config.500k.yaml`, set `data_dir: data/500k`, `reports_dir: reports/500k`, `collection: msmarco_v21_500k`, keep the dataset revision and seed, then:
 
 ```powershell
-python -m pytest -q
-python -m scripts.smoke
-python -m pip check
+$env:PRAG_CONFIG = 'config.500k.yaml'
+.\.venv\Scripts\python.exe -m scripts.build_corpus --n 500000
+.\.venv\Scripts\python.exe -m scripts.ingest
+.\.venv\Scripts\python.exe -m eval.run_all
 ```
 
-`scripts.smoke` uses real models on a small slice in an in-memory Qdrant client, warms the models and checks all retrieval modes and mutations. It deliberately does not write `summary.json` or a qualifying benchmark. Automated tests use deterministic fixture vectors only in temporary directories and cover corpus integrity, crash recovery, cache behaviour, filters, fusion, API contracts and recalculation.
+The 100K corpus and index are left untouched. Compare `ingest_stats.json` and the benchmark between scales.
 
-## Files
+## Layout
 
-- `app/`: config, model loading, caches, Qdrant schema, retrieval, optional generation, API.
-- `scripts/`: corpus builder, ingest/resume, independent recalculation, real-model smoke check.
-- `eval/`: IR, RAGAS, latency, tuning, raw-artifact reporting.
-- `Work Done till now/ui/`: retained Streamlit design and API client.
-- `Work Done till now/implementation precision rag.md`: updated implementation notes and corrections to the draft.
-- `tests/`: offline integration/regression checks.
+```
+app/        config, model loading, caches, Qdrant store, retriever, Groq generator, FastAPI
+scripts/    build_corpus, ingest (resumable), recalculate, smoke, check_groq, benchmark_devices, PowerShell launchers
+eval/       ir_eval, latency_bench, ragas_eval, tune, run_all, metrics
+ui/         Streamlit app, styles, API client, mock backend for UI work without the API
+tests/      offline tests with fixture vectors
+docs/       problem statement, proposal, implementation notes, GPU setup, requirements map, demo script
+reports/    benchmark outputs (generated); archive/ holds the first CPU build's measurements
+```
 
 ## Sources
 
-- [Microsoft MS MARCO dataset card](https://huggingface.co/datasets/microsoft/ms_marco)
-- [FastEmbed v0.7.4 dense model registry](https://github.com/qdrant/fastembed/blob/v0.7.4/fastembed/text/onnx_embedding.py)
-- [Qdrant quantization and rescoring](https://qdrant.tech/documentation/guides/quantization/)
+- [MS MARCO dataset card](https://huggingface.co/datasets/microsoft/ms_marco)
+- [FastEmbed supported models](https://qdrant.github.io/fastembed/examples/Supported_Models/)
+- [Qdrant hybrid queries](https://qdrant.tech/documentation/concepts/hybrid-queries/) and [quantization](https://qdrant.tech/documentation/guides/quantization/)
 - [RAGAS 0.2.15 context precision](https://docs.ragas.io/en/v0.2.15/concepts/metrics/available_metrics/context_precision/)
-
-Keep dataset/model use within their published terms. Publishing a GitHub repository is still a team deliverable; this workspace was not originally a Git repository and no remote has been supplied.

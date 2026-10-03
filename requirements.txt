@@ -10,6 +10,7 @@ pydantic>=2.9,<3
 numpy>=1.26,<3
 requests>=2.32,<3
 psutil>=6,<8
+portalocker>=2,<4
 matplotlib>=3.9,<4
 streamlit>=1.49,<2
 pandas>=2.2,<4

@@ -2,10 +2,17 @@
 headless = true
 address = "127.0.0.1"
 port = 8501
+# Re-run the app every time a file under ui/ is saved.
+runOnSave = true
+fileWatcherType = "poll"
 
 [browser]
 gatherUsageStats = false
 
 [theme]
 base = "light"
-primaryColor = "#0b7a75"
+primaryColor = "#0e6b4a"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#efefef"
+textColor = "#202020"
+font = "sans serif"

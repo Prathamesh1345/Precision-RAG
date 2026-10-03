@@ -7,7 +7,7 @@
 | FR-3 BM25 hybrid with configurable/documented fusion | `app/retriever.py`, `config.yaml`, README | Actual Phase 2 improvement |
 | FR-4 pre-retrieval filters | `app/store.py`, dense/sparse Prefetch filters | Server demo |
 | FR-5 live upsert/delete | `app/retriever.py`, `app/api.py`, retained UI | Server demo; embedded tests already pass |
-| FR-6 query UI, mode toggle, scores | `Work Done till now/ui/streamlit_app.py` | UI is retained and smoke-checked |
+| FR-6 query UI, mode toggle, scores | `ui/streamlit_app.py` | UI is retained and smoke-checked |
 | NFR-1/2 quality thresholds | `eval/ragas_eval.py` | >0.75 precision, >0.70 recall measured |
 | NFR-3 100 queries/p95 <300ms | `eval/latency_bench.py` | Full 100K server measurement |
 | NFR-4 scale | `--n 100000`, optional `--n 500000` | Index count, not just corpus count |

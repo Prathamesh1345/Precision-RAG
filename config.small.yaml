@@ -1,0 +1,59 @@
+# Development config: a 2,000-passage corpus that builds and indexes in minutes.
+# Use it to check the whole pipeline on a laptop before the 100K/500K runs.
+#   PowerShell:  $env:PRAG_CONFIG='config.small.yaml'
+#   bash:        export PRAG_CONFIG=config.small.yaml
+# Everything not listed here is identical to config.yaml.
+collection: msmarco_small
+qdrant_url: http://localhost:6333
+data_dir: data/small
+reports_dir: reports/small
+models:
+  dense: BAAI/bge-small-en-v1.5
+  sparse: Qdrant/bm25
+  reranker: Xenova/ms-marco-MiniLM-L-6-v2
+  dimension: 384
+  threads: 4
+  batch_size: 256
+  bm25_k: 1.2
+  bm25_b: 0.75
+dataset:
+  name: microsoft/ms_marco
+  config: v2.1
+  revision: a47ee7aae8d7d466ba15f9f0bfac3b3681087b3a
+  tokenizer_revision: 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a
+  passages: 2000
+  eval_queries: 100
+  tuning_queries: 50
+  seed: 42
+  shuffle_buffer: 10000
+  max_tokens: 510
+index:
+  hnsw_m: 16
+  hnsw_ef_construct: 128
+  quantization: int8
+  on_disk_vectors: true
+  batch_size: 512
+  indexing_threshold: 20000
+  wait_timeout_seconds: 7200
+retrieval:
+  top_k: 5
+  prefetch_limit: 50
+  rerank_candidates: 30
+  hnsw_ef: 128
+  fusion: rrf
+  rrf_k: 60
+  weighted_alpha: 0.6
+  rescore: true
+  oversampling: 2.0
+cache:
+  enabled: true
+  max_items: 2048
+  ttl_seconds: 120
+llm:
+  model: openai/gpt-oss-120b
+  judge_model: openai/gpt-oss-120b
+  temperature: 0
+evaluation:
+  ragas_queries: 20
+  latency_queries: 100
+  judge_pause_seconds: 3

@@ -11,3 +11,5 @@ exports/
 reports/ragas_cache/
 reports/ragas_smoke_cache/
 *.log
+*.lock
+reports/runs/*/checks/

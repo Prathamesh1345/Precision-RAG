@@ -2,7 +2,7 @@
 
 Team eyaaduhcaam - ADROSONIC BUILD 2026 - PS1
 
-The runnable implementation is now at the repository root. The original design is retained in docs/implementation-original-reference.md for historical reference; its snippets are not the current execution instructions. Use the root README and config.yaml.
+The runnable implementation is now at the repository root. The original draft guide is in git history (implementation.md); its snippets are not the current execution instructions. Use the root README and config.yaml.
 
 ## What was retained
 
@@ -45,7 +45,7 @@ Run from the repository root with the Python environment activated:
 
 Run the UI in another terminal:
 
-    python -m streamlit run "Work Done till now/ui/streamlit_app.py"
+    python -m streamlit run ui/streamlit_app.py
 
 The 100K corpus is already built in this workspace. Do not rebuild it unless intentionally selecting a new output directory. Set the Groq key in .env before the RAGAS commands. Use --skip-ragas only for an explicitly incomplete development report.
 
