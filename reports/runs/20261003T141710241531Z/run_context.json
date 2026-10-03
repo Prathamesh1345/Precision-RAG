@@ -1,0 +1,213 @@
+{
+  "run_id": "20261003T141710241531Z",
+  "config": {
+    "collection": "msmarco_v21_100k",
+    "qdrant_url": "http://localhost:6333",
+    "data_dir": "data",
+    "reports_dir": "reports",
+    "models": {
+      "dense": "BAAI/bge-small-en-v1.5",
+      "sparse": "Qdrant/bm25",
+      "reranker": "Xenova/ms-marco-MiniLM-L-6-v2",
+      "dimension": 384,
+      "threads": 4,
+      "batch_size": 256,
+      "bm25_k": 1.2,
+      "bm25_b": 0.75
+    },
+    "dataset": {
+      "name": "microsoft/ms_marco",
+      "config": "v2.1",
+      "revision": "a47ee7aae8d7d466ba15f9f0bfac3b3681087b3a",
+      "tokenizer_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+      "passages": 100000,
+      "eval_queries": 100,
+      "tuning_queries": 50,
+      "seed": 42,
+      "shuffle_buffer": 10000,
+      "max_tokens": 510
+    },
+    "index": {
+      "hnsw_m": 16,
+      "hnsw_ef_construct": 128,
+      "quantization": "int8",
+      "on_disk_vectors": true,
+      "batch_size": 512,
+      "indexing_threshold": 20000,
+      "wait_timeout_seconds": 7200
+    },
+    "retrieval": {
+      "top_k": 5,
+      "prefetch_limit": 50,
+      "rerank_candidates": 30,
+      "hnsw_ef": 128,
+      "fusion": "rrf",
+      "rrf_k": 60,
+      "weighted_alpha": 0.6,
+      "rescore": true,
+      "oversampling": 2.0
+    },
+    "cache": {
+      "enabled": true,
+      "max_items": 2048,
+      "ttl_seconds": 120
+    },
+    "llm": {
+      "model": "openai/gpt-oss-120b",
+      "judge_model": "openai/gpt-oss-120b",
+      "temperature": 0
+    },
+    "evaluation": {
+      "ragas_queries": 20,
+      "latency_queries": 100,
+      "judge_pause_seconds": 3
+    }
+  },
+  "config_fingerprint": "5b76a6f0e436d344978565d025976d81b23193cab721553621b681fa5c4d8127",
+  "manifest": {
+    "dataset": "microsoft/ms_marco",
+    "dataset_config": "v2.1",
+    "revision": "a47ee7aae8d7d466ba15f9f0bfac3b3681087b3a",
+    "tokenizer": "BAAI/bge-small-en-v1.5",
+    "tokenizer_revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "seed": 42,
+    "shuffle_buffer": 10000,
+    "max_tokens": 510,
+    "sampling": "seeded bounded-buffer shuffle; validation evidence first, then train distractors",
+    "deduplication": "exact normalized text, not semantic near-duplicate removal",
+    "passages": 100000,
+    "eval_queries": 100,
+    "tuning_queries": 50,
+    "evaluation_reserved_passages": 1494,
+    "build_seconds": 88.56778529999974,
+    "files": {
+      "corpus.parquet": "47b3194e0b9420dc993fb15de41b85f0dd0c20c2334d0dac7aa31fc725c512e9",
+      "eval_queries.jsonl": "48ff2839280f2435d91a68c45a988417f57a11ead777503622bdc5a411e7b869",
+      "tuning_queries.jsonl": "e4d84bdacd170fe8d74226baec5277dfc0f7ee995b068d465d48dc5951ec15db",
+      "qrels.json": "32b9e09e9c33dd9daef54b64814fe2277f51f1be8f757632a24bfaaaa60cfb21"
+    },
+    "recalculation": {
+      "stage": "03_corpus_recalculation",
+      "recalculated_at_utc": "2026-10-03T06:49:10.210015+00:00",
+      "passages": 100000,
+      "unique_ids": 100000,
+      "qrel_coverage": 1.0,
+      "queries": 150,
+      "max_tokens": 372,
+      "trimmed_unique_passages": 0,
+      "token_counts_recomputed": true,
+      "categories": {
+        "description": 41611,
+        "numeric": 23986,
+        "entity": 9247,
+        "person": 16061,
+        "location": 9313
+      },
+      "top_sources": {
+        "en.wikipedia.org": 9894,
+        "answers.com": 2799,
+        "answers.yahoo.com": 1326,
+        "webmd.com": 841,
+        "wikihow.com": 675,
+        "quora.com": 630,
+        "quizlet.com": 628,
+        "imdb.com": 607,
+        "thefreedictionary.com": 536,
+        "youtube.com": 470,
+        "reference.com": 457,
+        "ehow.com": 438,
+        "mayoclinic.org": 419,
+        "history.com": 411,
+        "merriam-webster.com": 394,
+        "dictionary.com": 386,
+        "study.com": 383,
+        "medicinenet.com": 373,
+        "dailymail.co.uk": 350,
+        "huffingtonpost.com": 340
+      },
+      "meets_100k_minimum": true,
+      "parquet_bytes": 21038268
+    },
+    "statistics": {
+      "raw_passages": 100855,
+      "trimmed_occurrences": 0,
+      "accepted_occurrences": 100848,
+      "exact_duplicates": 848
+    }
+  },
+  "environment": {
+    "python": "3.12.14",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "processor": "AMD64 Family 25 Model 68 Stepping 1, AuthenticAMD",
+    "cpu_logical": 16,
+    "ram_bytes": 16366272512,
+    "packages": {
+      "qdrant-client": "1.16.2",
+      "fastembed": null,
+      "fastembed-gpu": "0.7.4",
+      "datasets": "5.0.1",
+      "onnxruntime": null,
+      "onnxruntime-gpu": "1.23.2",
+      "numpy": "2.5.3",
+      "ragas": "0.2.15",
+      "langchain-groq": "0.3.2"
+    },
+    "devices": {
+      "dense": "cuda",
+      "rerank": "cuda"
+    }
+  },
+  "index": {
+    "points": 100000,
+    "status": "green",
+    "indexed_vectors": 100000,
+    "optimizer_status": "ok",
+    "collection": "msmarco_v21_100k"
+  },
+  "ingestion": null,
+  "model_provenance": {
+    "dense": {
+      "snapshot_directory": "aa8f8b060edb00e03bfdd08813a2949946c8ba55",
+      "files": {
+        "config.json": "13582bcf2effc85b7bf3d3f5532e686bc1c9ce86bb009d10f0ec33cbe92299dd",
+        "model_optimized.onnx": "51f1bd0addd6e859e42c2c8021a5e5461385bb676a649f4b269aa445449f2431",
+        "special_tokens_map.json": "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a",
+        "tokenizer.json": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+        "tokenizer_config.json": "0b29c7bfc889e53b36d9dd3e686dd4300f6525110eaa98c76a5dafceb2029f53"
+      }
+    },
+    "sparse": {
+      "snapshot_directory": "22b8d2af71a76161e18dd432d2cee0eefa66e412",
+      "files": {
+        "arabic.txt": "0df01c0a184d8c15077c6f0ee70e25e0c0308d827b92b14a19f5f819a0c465d0",
+        "config.json": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "danish.txt": "1bedc9cf5a8830dacf8c4ee0d8b301f0801861756ad0d504431d01047f961b0c",
+        "dutch.txt": "e5a2a7c390fe3ad0c0a132586ed11492b635d66a1f426cd89677f80b07bc76a6",
+        "english.txt": "019f104ba2ed07436d05f9cdd3383034ad66014edc27fc651f837e1a038b6451",
+        "finnish.txt": "952af766edc9b8e7ddc877fc464cbd94b91754b5621fdfdd7020568fd4813fcd",
+        "french.txt": "58ac7f7c074b70dc0fc86f6fcf40b2c227e9f95627e90e57971d5cce1e30e2e9",
+        "german.txt": "f0c25acd7ec02a31f6679d9664ec5222ca846fdbc58db96160f4e7c0ddb0f7ea",
+        "greek.txt": "7a97c6dc81144f7e8fcfe976025954ca3731f78a75d1fd86aa87f261fd195dae",
+        "hungarian.txt": "64a68b5ebaa616b25bd976ac915c326f2ea8cce8b59a0ac8c5728b980ae4fb0c",
+        "italian.txt": "293d7841f198e4012f49e8e5653c3bfd073a58cea1259fa2c0fcec894167b628",
+        "norwegian.txt": "f7e5b42208ccf1b1f282f9e0f8570e464272762bda5718b6b26750f510a688dc",
+        "portuguese.txt": "6e7b98378c6b728266a83ebf035d927abf16b9e0d815d6204d81d90d896bcc9b",
+        "romanian.txt": "0ab53d21cbde00c6bf367706a0243c646140ba564cce7e83ac33d80f8923e957",
+        "russian.txt": "1743191192b4a4f77fcc216499455dc00c1b8626fdd407076a8deefff80e3d59",
+        "spanish.txt": "6125eadf28ba664a60bf4296147bcbd40b80be93670056fdb229960ac15e2310",
+        "swedish.txt": "2a9d9d756bc4257d49329994f805c712cd5ab6746162e2082752238766c1c0c8",
+        "turkish.txt": "f2c7f0c2bd3dba42da700776266831853a3b5f1207fada5c15207334109abb57"
+      }
+    },
+    "reranker": {
+      "snapshot_directory": "a09144355adeed5f58c8ed011d209bf8ee5a1fec",
+      "files": {
+        "config.json": "d827779a72d27ae68cf878a6fc2e954542663fe21ca515d9f4783fc96be2d37e",
+        "special_tokens_map.json": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3",
+        "tokenizer.json": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+        "tokenizer_config.json": "0b29c7bfc889e53b36d9dd3e686dd4300f6525110eaa98c76a5dafceb2029f53",
+        "onnx/model.onnx": "c623d0bcb99f4622beb413eaef00cfbe5db20df9f1dd982da4b4f26022881870"
+      }
+    }
+  }
+}

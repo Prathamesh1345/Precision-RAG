@@ -1,0 +1,10 @@
+{
+  "minimum_index_scale": true,
+  "indexing_under_two_hours": null,
+  "baseline_ragas_recorded": true,
+  "unfiltered_phase2_meets_quality_latency_and_improvement": {
+    "hybrid_rerank_rrf": false
+  },
+  "latency_scope": "in-process retrieval, not HTTP; see report",
+  "publishing_and_live_demo": "must be demonstrated separately"
+}

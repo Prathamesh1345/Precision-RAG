@@ -4,7 +4,7 @@ import os
 def answer(query, hits, cfg):
     if not hits:
         return "I don't know based on the available passages."
-    key = os.getenv('GROQ_API_KEY')
+    key = os.getenv('GROQ_API_KEY') or os.getenv('GROQ_API_KEYS', '').split(',')[0].strip()
     if not key:
         raise ValueError('Set GROQ_API_KEY in .env to enable answers; retrieval works without it')
     from groq import Groq

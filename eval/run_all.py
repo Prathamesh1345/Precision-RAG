@@ -152,8 +152,8 @@ def main():
         if args.ragas_queries < 20:
             ap.error('--ragas-queries must be at least 20')
         cfg['evaluation']['ragas_queries'] = args.ragas_queries
-    if not args.skip_ragas and not os.getenv('GROQ_API_KEY'):
-        ap.error('Set GROQ_API_KEY, install requirements-eval.txt, or use --skip-ragas for development only')
+    if not args.skip_ragas and not (os.getenv('GROQ_API_KEY') or os.getenv('GROQ_API_KEYS')):
+        ap.error('Set GROQ_API_KEY or GROQ_API_KEYS, install requirements-eval.txt, or use --skip-ragas for development only')
     data, reports = project_path(cfg['data_dir']), project_path(cfg['reports_dir'])
     manifest = verify_manifest(data)
     service = get_retriever()
