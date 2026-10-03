@@ -1,7 +1,8 @@
 """Talks to the real FastAPI backend; falls back to the mock when it isn't running."""
 import os
 import requests
-
+from dotenv import load_dotenv
+load_dotenv()
 from ui.mock_backend import MockBackend
 
 API_URL = os.getenv("PRAG_API_URL", "http://127.0.0.1:8000")
