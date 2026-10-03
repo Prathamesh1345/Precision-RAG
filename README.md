@@ -174,3 +174,7 @@ reports/    benchmark outputs (generated); archive/ holds the first CPU build's 
 - [FastEmbed supported models](https://qdrant.github.io/fastembed/examples/Supported_Models/)
 - [Qdrant hybrid queries](https://qdrant.tech/documentation/concepts/hybrid-queries/) and [quantization](https://qdrant.tech/documentation/guides/quantization/)
 - [RAGAS 0.2.15 context precision](https://docs.ragas.io/en/v0.2.15/concepts/metrics/available_metrics/context_precision/)
+
+
+thank you 
+
